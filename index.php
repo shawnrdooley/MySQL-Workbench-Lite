@@ -1,49 +1,64 @@
 <?php
+error_reporting(0);
 session_start();
+
+function save($v){
+	//sanitize here?
+	
+	if ( isset($_POST[$v])) $_SESSION[$v] = $_POST[$v];
+	
+}
 ?>
 
 <html>
 <head><title>Lite</title></head>
 
+<body style=" background: linear-gradient(to right, lightskyblue 10%, antiquewhite, lightskyblue 90%); text-align: center;">
+<div style="background-color: mintcream; width:70%; height:100%; margin:auto; border-radius: 25px; " >
+    
 <form action="" method="post">
-	<input type="text" name="server" value="xxxxx"><br>
-    <input type="text" name="user" value="xxxxx"><br>
-    <input type="password" name="password" value="xxxxx"><br>
+	<input type="text" name="server" value="xxx"><br>
+    <input type="text" name="username" value="xxxn"><br>
+    <input type="password" name="password" value="xxx"><br>
     <input type="hidden" name="action" value="log_in">
     <input type="submit" value="Log In">
 </form>
 <?php
 
-if($_SESSION["server"]=="")   $_SESSION["server"] = $_POST["server"];
-if($_SESSION["username"]=="") $_SESSION["username"] = $_POST["user"];
-if($_SESSION["password"]=="") $_SESSION["password"] = $_POST["password"];
-if($_SESSION["database"]=="") $_SESSION["database"] = $_POST["list_of_databases"];
-
+save("server");
+save("username");
+save("password");
+save("database");
+save("tables");
 
 
 $s = new SchemaCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
 $tb = new GUItable();
 $tb = $s->read();
-echo $tb->getListBox("list_of_databases");
+echo $tb->getListBox("database");
 
 
 $d = new DatabaseCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"]);
 $tb2 = new GUItable();
 $tb2 = $d->read();
-echo $tb2->getListBox("list_of_tables");
+echo $tb2->getListBox("tables");
 
-$t = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], $_POST["list_of_tables"]);
+
+$t = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], $_SESSION["tables"]);
 $tb3 = new GUItable();
 $tb3 = $t->read();
 echo $tb3->getHTMLTable();
 
 ?>
+</div>
+</body>
 </html>
 
 
 
 <?php
 class DatabaseConnection {
+    //sanitize here?
 	private $m_server;
 	private $m_username;
 	private $m_password;
@@ -54,7 +69,8 @@ class DatabaseConnection {
 		$this->m_server = $server;
 		$this->m_username = $username;
 		$this->m_password = $password;
-
+		
+		
 		// Create connection
 		$this->m_conn = new mysqli($this->m_server, $this->m_username, $this->m_password);
 		
@@ -107,7 +123,7 @@ class Error {
 	function __construct($error_string) {
 	$m_error_str = $error_string;
 	
-	echo $m_error_str;
+	//echo $m_error_str;
 	
 	}
 }//end error class
@@ -167,9 +183,7 @@ class SchemaCRUD{
 //open a connection
 	public function __construct($server, $username, $password) {
 
-		
 		$this->m_conn = new DatabaseConnection($server, $username, $password);
-		
 
 	}//end opening a connection
 	
@@ -195,7 +209,6 @@ class DatabaseCRUD{
 		$this->m_database = $database;
 		
 		$this->m_conn = new DatabaseConnection($server, $username, $password);
-		
 
 
 	}//end opening a connection
@@ -226,8 +239,8 @@ class TableCRUD{
 		$this->m_table = $table;
 
 		$this->m_conn = new DatabaseConnection($server, $username, $password);
-
-
+		
+		
 	}//end opening a connection
 
 	public function read(){

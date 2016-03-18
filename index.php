@@ -49,7 +49,20 @@ $tb3 = new GUItable();
 $tb3 = $t->read();
 echo $tb3->getHTMLTable();
 
+
+
+$query_input = new GUItable();
+echo $query_input->getTextArea(10, 50, "run_query");
+save("run_query");
+
+$q = new DatabaseConnection($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
+$tb4 = new GUItable();
+$tb4 = $q->getQuery($_SESSION["run_query"]);
+echo $tb4->getHTMLTable();
+
 ?>
+
+
 </div>
 </body>
 </html>
@@ -172,6 +185,13 @@ class GUItable {
 		return $s;
 		
 	}//end get list box
+	
+	public function getTextArea($rows, $cols, $name){
+		
+		return "<form action='' method='post'><textarea rows='" . $rows ."' cols='" . $cols ."' name='" . $name . "'></textarea>"
+					. "<input type='submit' value='Execute'></form>";
+		
+	}//end getTextArea
 	
 	
 }//end table class

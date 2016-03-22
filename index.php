@@ -75,7 +75,7 @@ echo $query_input->getTextArea(10, 50, "run_query");
 
 $q = new DatabaseConnection($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
 $tb4 = new GUItable();
-$tb4 = $q->getQuery($_SESSION["run_query"]);
+$tb4 = $q->getQuery($_SESSION["run_query"], true);
 echo $tb4->getHTMLTable();
 
 ?>
@@ -124,7 +124,7 @@ class DatabaseConnection {
 	}//end sending a query
 
 	//get a query
-	public function getQuery($q){
+	public function getQuery($q, $displayError = false){
 		$table = new GUItable();
 
 		if ($this->m_conn->query($q)) {
@@ -140,7 +140,7 @@ class DatabaseConnection {
 			}
 
 		}
-		else $e = new Error("Query Failed - [" . $q . "]");
+		else $e = new Error("Query Failed - [" . $q . "]", $displayError);
 		return $table;
 	}//end getting a query
 
@@ -151,10 +151,10 @@ class DatabaseConnection {
 class Error {
 	private $m_error_str;
 	
-	function __construct($error_string) {
+	function __construct($error_string, $echo = false) {
 	$m_error_str = $error_string;
 	
-	//echo $m_error_str;
+	if ($echo) echo $m_error_str;
 	
 	}
 }//end error class

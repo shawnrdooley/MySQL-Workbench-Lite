@@ -1,4 +1,12 @@
 <?php
+include "creds.php";
+//creds.php looks like: 
+//<?php 
+// $server = "not_your_server";
+// $username = "not_your_username";
+// $password = "not_your_password";
+
+
 error_reporting(0);
 session_start();
 
@@ -17,9 +25,9 @@ function save($v){
 <div style="background-color: mintcream; width:70%; height:100%; margin:auto; border-radius: 25px; " >
     
 <form action="" method="post">
-	<input type="text" name="server" value="xxx"><br>
-    <input type="text" name="username" value="xxxn"><br>
-    <input type="password" name="password" value="xxx"><br>
+	<input type="text" name="server" value="<?php echo $server?>"><br>
+    <input type="text" name="username" value="<?php echo $username?>"><br>
+    <input type="password" name="password" value="<?php echo $password?>"><br>
     <input type="hidden" name="action" value="log_in">
     <input type="submit" value="Log In">
 </form>

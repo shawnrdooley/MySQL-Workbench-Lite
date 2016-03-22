@@ -30,6 +30,8 @@ save("username");
 save("password");
 save("database");
 save("tables");
+save("attributes");
+save("run_query");
 
 
 $s = new SchemaCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
@@ -49,11 +51,19 @@ $tb3 = new GUItable();
 $tb3 = $t->read();
 echo $tb3->getHTMLTable();
 
+$tb_attrib = new GUItable();
+$tb_attrib = $t->getAttributes(); 
+echo $tb_attrib ->getListBox("attributes");
+
+
+$tb_complex = new GUItable();
+$tb_complex = $d->complexRead($_SESSION["attributes"], $_SESSION["tables"]);
+echo $tb_complex->getHTMLTable();
+
 
 
 $query_input = new GUItable();
 echo $query_input->getTextArea(10, 50, "run_query");
-save("run_query");
 
 $q = new DatabaseConnection($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
 $tb4 = new GUItable();
@@ -174,10 +184,18 @@ class GUItable {
 		
 		$s = "<form action='' method='post'><select name='" . $name ."'>";
 	
-		for ($i=0; $i<=sizeof($this->m_tb); $i++) {
+		$s .= "<option value='" . $this->m_tb[0] . "'>" . $this->m_tb[0];
 		
-		
-			if ($this->m_tb[$i] != $this->NEWLINE) $s .= "<option value='" . $this->m_tb[$i] . "'>". $this->m_tb[$i] ."</option>";                
+		for ($i=1; $i<=sizeof($this->m_tb); $i++) {
+
+			if ($this->m_tb[$i] != $this->NEWLINE) $s .= " | " . $this->m_tb[$i];
+			
+			else {
+				
+				$i = $i + 1; 
+				$s .= "</option>" . "<option value='" . $this->m_tb[$i] . "'>" . $this->m_tb[$i];
+			}
+				              
 			
 		}
 		
@@ -239,6 +257,23 @@ class DatabaseCRUD{
 
 
 	}
+	
+	public function complexRead($attributes, $tables){
+		
+		$s = "SELECT ";
+		
+		$s .= $attributes;
+		
+		$s .= " FROM " . $this->m_database . ".";
+		
+		$s .= $tables;
+		
+		$s .= ";";
+		
+		return $this->m_conn->getQuery($s);
+		
+		
+	}
 
 
 }
@@ -268,6 +303,12 @@ class TableCRUD{
 		return $this->m_conn->getQuery("SELECT * FROM " . $this->m_database . "." . $this->m_table . ";");
 
 
+	}
+	
+	public function getAttributes(){
+		
+		return $this->m_conn->getQuery("SHOW COLUMNS FROM " . $this->m_database . "." . $this->m_table . ";");
+		
 	}
 
 

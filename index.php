@@ -11,10 +11,10 @@ error_reporting(0);
 session_start();
 
 function save($v){
-	//sanitize here?
-	
-	if ( isset($_POST[$v])) $_SESSION[$v] = $_POST[$v];
-	
+//sanitize here?
+
+if ( isset($_POST[$v])) $_SESSION[$v] = $_POST[$v];
+
 }
 ?>
 
@@ -25,7 +25,7 @@ function save($v){
 <div style="background-color: mintcream; width:70%; height:100%; margin:auto; border-radius: 25px; " >
     
 <form action="" method="post">
-	<input type="text" name="server" value="<?php echo $server?>"><br>
+<input type="text" name="server" value="<?php echo $server?>"><br>
     <input type="text" name="username" value="<?php echo $username?>"><br>
     <input type="password" name="password" value="<?php echo $password?>"><br>
     <input type="hidden" name="action" value="log_in">
@@ -38,7 +38,9 @@ save("username");
 save("password");
 save("database");
 save("tables");
+save("tables2");
 save("attributes");
+save("attributes2");
 save("run_query");
 
 
@@ -53,19 +55,33 @@ $tb2 = new GUItable();
 $tb2 = $d->read();
 echo $tb2->getListBox("tables");
 
+$tbt = new GUItable();
+$tbt = $d->read();
+echo $tbt->getListBox("tables2");
+
 
 $t = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], $_SESSION["tables"]);
 $tb3 = new GUItable();
 $tb3 = $t->read();
 echo $tb3->getHTMLTable();
 
+$t2 = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], $_SESSION["tables2"]);
+$tbt3 = new GUItable();
+$tbt3 = $t2->read();
+echo $tbt3->getHTMLTable();
+
 $tb_attrib = new GUItable();
 $tb_attrib = $t->getAttributes(); 
-echo $tb_attrib ->getListBox("attributes");
+echo $tb_attrib ->getListBoxMultiple("attributes");
+
+$tb2_attrib = new GUItable();
+$tb2_attrib = $t2->getAttributes();
+echo $tb2_attrib ->getListBoxMultiple("attributes2");
+
 
 
 $tb_complex = new GUItable();
-$tb_complex = $d->complexRead($_SESSION["attributes"], $_SESSION["tables"]);
+$tb_complex = $d->complexRead(array_merge($_SESSION["attributes"], $_SESSION["attributes2"]), [$_SESSION["tables"], $_SESSION["tables2"]]);
 echo $tb_complex->getHTMLTable();
 
 
@@ -90,198 +106,228 @@ echo $tb4->getHTMLTable();
 <?php
 class DatabaseConnection {
     //sanitize here?
-	private $m_server;
-	private $m_username;
-	private $m_password;
-	private $m_conn;
+private $m_server;
+private $m_username;
+private $m_password;
+private $m_conn;
 
-	//open a connection
-	public function __construct($server, $username, $password) {
-		$this->m_server = $server;
-		$this->m_username = $username;
-		$this->m_password = $password;
-		
-		
-		// Create connection
-		$this->m_conn = new mysqli($this->m_server, $this->m_username, $this->m_password);
-		
-		
-		// Check connection
-		if ($this->m_conn->connect_error) {
-			$e = new Error("Could not connect to database.");
-		}
+//open a connection
+public function __construct($server, $username, $password) {
+$this->m_server = $server;
+$this->m_username = $username;
+$this->m_password = $password;
 
-	}//end opening a connection
 
-	//send a query
-	public function sendQuery($q){
+// Create connection
+$this->m_conn = new mysqli($this->m_server, $this->m_username, $this->m_password);
 
-		if ($this->m_conn->query($q)) {
-			//the query worked
-				
-		}
-		else $e = new Error("Query Failed - [" . $q . "]");
-	}//end sending a query
 
-	//get a query
-	public function getQuery($q, $displayError = false){
-		$table = new GUItable();
+// Check connection
+if ($this->m_conn->connect_error) {
+$e = new Error("Could not connect to database.");
+}
 
-		if ($this->m_conn->query($q)) {
-			$result = $this->m_conn->query($q);
-			$row = $result->fetch_array(MYSQLI_NUM);
-			$row_count = $result->num_rows;
+}//end opening a connection
 
-			for ($i = 0; $i < $row_count; $i++){
-					
-				foreach ($row as $value) {$table->addItem($value);}
-				$table->addItem($table->NEWLINE);
-				$row = $result->fetch_array(MYSQLI_NUM);
-			}
+//send a query
+public function sendQuery($q){
 
-		}
-		else $e = new Error("Query Failed - [" . $q . "]", $displayError);
-		return $table;
-	}//end getting a query
+if ($this->m_conn->query($q)) {
+//the query worked
+
+}
+else $e = new Error("Query Failed - [" . $q . "]");
+}//end sending a query
+
+//get a query
+public function getQuery($q, $displayError = false){
+$table = new GUItable();
+
+if ($this->m_conn->query($q)) {
+$result = $this->m_conn->query($q);
+$row = $result->fetch_array(MYSQLI_NUM);
+$row_count = $result->num_rows;
+
+for ($i = 0; $i < $row_count; $i++){
+
+foreach ($row as $value) {$table->addItem($value);}
+$table->addItem($table->NEWLINE);
+$row = $result->fetch_array(MYSQLI_NUM);
+}
+
+}
+else $e = new Error("Query Failed - [" . $q . "]", $displayError);
+return $table;
+}//end getting a query
 
 
 
 }//end DBconnection class
 
 class Error {
-	private $m_error_str;
-	
-	function __construct($error_string, $echo = false) {
-	$m_error_str = $error_string;
-	
-	if ($echo) echo $m_error_str;
-	
-	}
+private $m_error_str;
+
+function __construct($error_string, $echo = false) {
+$m_error_str = $error_string;
+
+if ($echo) echo $m_error_str;
+
+}
 }//end error class
 
 class GUItable {
-	public $NEWLINE = "NEWLINE";
-	private $m_tb = array();
-	private $index = 0;
-	
-	public function addItem($item){
-		
-		$this->m_tb[$this->index] = $item;
-		$this->index = $this->index + 1;
-		
-		
-	}//end add item
-	
-	public function getHTMLTable(){
-		
-		$s = "<table border='1'> <tr>";
-		
-	for ($i=0; $i<=sizeof($this->m_tb); $i++) { 
-		
-		
-		if ($this->m_tb[$i] != $this->NEWLINE) $s .= "<td>" . $this->m_tb[$i] . "</td>"; 
-		else $s .= "</tr><tr>";
-	}
-		
-	$s .= "</tr></table>";
-		return $s;
-		
-	}//end get table
-	
-	public function getListBox($name){
-		
-		$s = "<form action='' method='post'><select name='" . $name ."'>";
-	
-		$s .= "<option value='" . $this->m_tb[0] . "'>" . $this->m_tb[0];
-		
-		for ($i=1; $i<=sizeof($this->m_tb); $i++) {
+public $NEWLINE = "NEWLINE";
+private $m_tb = array();
+private $index = 0;
 
-			if ($this->m_tb[$i] != $this->NEWLINE) $s .= " | " . $this->m_tb[$i];
-			
-			else {
-				
-				$i = $i + 1; 
-				$s .= "</option>" . "<option value='" . $this->m_tb[$i] . "'>" . $this->m_tb[$i];
-			}
-				              
-			
-		}
-		
-		$s .= "</select><input type='submit'></form>";
-		return $s;
-		
-	}//end get list box
-	
-	public function getTextArea($rows, $cols, $name){
-		
-		return "<form action='' method='post'><textarea rows='" . $rows ."' cols='" . $cols ."' name='" . $name . "'></textarea>"
-					. "<input type='submit' value='Execute'></form>";
-		
-	}//end getTextArea
-	
-	
+public function addItem($item){
+
+$this->m_tb[$this->index] = $item;
+$this->index = $this->index + 1;
+
+
+}//end add item
+
+public function getHTMLTable(){
+
+$s = "<table border='1'> <tr>";
+
+for ($i=0; $i<=sizeof($this->m_tb); $i++) { 
+
+
+if ($this->m_tb[$i] != $this->NEWLINE) $s .= "<td>" . $this->m_tb[$i] . "</td>"; 
+else $s .= "</tr><tr>";
+}
+
+$s .= "</tr></table>";
+return $s;
+
+}//end get table
+
+public function getListBox($name){
+
+$s = "<form action='' method='post'><select name='" . $name ."'>";
+
+$s .= "<option value='" . $this->m_tb[0] . "'>" . $this->m_tb[0];
+
+for ($i=1; $i<=sizeof($this->m_tb); $i++) {
+
+if ($this->m_tb[$i] != $this->NEWLINE) $s .= " | " . $this->m_tb[$i];
+
+else {
+
+$i = $i + 1; 
+$s .= "</option>" . "<option value='" . $this->m_tb[$i] . "'>" . $this->m_tb[$i];
+}
+             
+
+}
+
+$s .= "</select><input type='submit'></form>";
+return $s;
+
+}//end get list box
+
+public function getListBoxMultiple($name){
+
+$s = "<form action='' method='post'><select name='" . $name ."[]' multiple>";
+
+$s .= "<option value='" . $this->m_tb[0] . "'>" . $this->m_tb[0];
+
+for ($i=1; $i<=sizeof($this->m_tb); $i++) {
+
+if ($this->m_tb[$i] != $this->NEWLINE) $s .= " | " . $this->m_tb[$i];
+
+else {
+
+$i = $i + 1; 
+$s .= "</option>" . "<option value='" . $this->m_tb[$i] . "'>" . $this->m_tb[$i];
+}
+             
+
+}
+
+$s .= "</select><input type='submit'></form>";
+return $s;
+
+}//end get list box multiple
+
+public function getTextArea($rows, $cols, $name){
+
+return "<form action='' method='post'><textarea rows='" . $rows ."' cols='" . $cols ."' name='" . $name . "'></textarea>"
+. "<input type='submit' value='Execute'></form>";
+
+}//end getTextArea
+
+
 }//end table class
 
 class SchemaCRUD{
 
-	private $m_conn;
-	
+private $m_conn;
+
 //open a connection
-	public function __construct($server, $username, $password) {
+public function __construct($server, $username, $password) {
 
-		$this->m_conn = new DatabaseConnection($server, $username, $password);
+$this->m_conn = new DatabaseConnection($server, $username, $password);
 
-	}//end opening a connection
-	
-	public function read(){
-		
-		return $this->m_conn->getQuery("Show Databases;");
-		
-		
-	}
-	
-	
+}//end opening a connection
+
+public function read(){
+
+return $this->m_conn->getQuery("Show Databases;");
+
+
+}
+
+
 }
 
 class DatabaseCRUD{
 
 
-	private $m_database;
-	private $m_conn;
+private $m_database;
+private $m_conn;
 
-	//open a connection
-	public function __construct($server, $username, $password, $database) {
+//open a connection
+public function __construct($server, $username, $password, $database) {
 
-		$this->m_database = $database;
-		
-		$this->m_conn = new DatabaseConnection($server, $username, $password);
+$this->m_database = $database;
 
-
-	}//end opening a connection
-
-	public function read(){
-
-		return $this->m_conn->getQuery("show tables from " . $this->m_database . ";");
+$this->m_conn = new DatabaseConnection($server, $username, $password);
 
 
-	}
-	
-	public function complexRead($attributes, $tables){
-		
-		$s = "SELECT ";
-		
-		$s .= $attributes;
-		
-		$s .= " FROM " . $this->m_database . ".";
-		
-		$s .= $tables;
-		
-		$s .= ";";
-		
-		return $this->m_conn->getQuery($s);
-		
-		
-	}
+}//end opening a connection
+
+public function read(){
+
+return $this->m_conn->getQuery("show tables from " . $this->m_database . ";");
+
+
+}
+
+public function complexRead($attributes, $tables){
+
+$s = "SELECT ";
+
+	for ($i = 0; $i <= sizeOf($attributes)-2; $i = $i + 1){
+		$s .= $attributes[$i] . ",";
+		}
+		$s .= $attributes[sizeOf($attributes) - 1];
+
+$s .= " FROM ";
+
+	for ($i = 0; $i <= sizeOf($tables)-2; $i = $i + 1){
+		$s .= $this->m_database . "." . $tables[$i] . ",";
+		}
+		$s .= $this->m_database . "." .  $tables[sizeOf($tables) - 1];
+
+$s .= ";";
+
+return $this->m_conn->getQuery($s);
+
+
+}
 
 
 }
@@ -291,33 +337,33 @@ class DatabaseCRUD{
 
 class TableCRUD{
 
-	private $m_database;
-	private $m_conn;
-	private $m_table;
+private $m_database;
+private $m_conn;
+private $m_table;
 
-	//open a connection
-	public function __construct($server, $username, $password, $database, $table) {
+//open a connection
+public function __construct($server, $username, $password, $database, $table) {
 
-		$this->m_database = $database;
-		$this->m_table = $table;
+$this->m_database = $database;
+$this->m_table = $table;
 
-		$this->m_conn = new DatabaseConnection($server, $username, $password);
-		
-		
-	}//end opening a connection
-
-	public function read(){
-
-		return $this->m_conn->getQuery("SELECT * FROM " . $this->m_database . "." . $this->m_table . ";");
+$this->m_conn = new DatabaseConnection($server, $username, $password);
 
 
-	}
-	
-	public function getAttributes(){
-		
-		return $this->m_conn->getQuery("SHOW COLUMNS FROM " . $this->m_database . "." . $this->m_table . ";");
-		
-	}
+}//end opening a connection
+
+public function read(){
+
+return $this->m_conn->getQuery("SELECT * FROM " . $this->m_database . "." . $this->m_table . ";");
+
+
+}
+
+public function getAttributes(){
+
+return $this->m_conn->getQuery("SHOW COLUMNS FROM " . $this->m_database . "." . $this->m_table . ";");
+
+}
 
 
 }

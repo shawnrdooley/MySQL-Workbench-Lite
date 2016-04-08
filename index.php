@@ -1,7 +1,7 @@
 <?php
 include "creds.php";
-//creds.php looks like: 
-//<?php 
+//creds.php looks like:
+//<?php
 // $server = "not_your_server";
 // $username = "not_your_username";
 // $password = "not_your_password";
@@ -19,11 +19,17 @@ if ( isset($_POST[$v])) $_SESSION[$v] = $_POST[$v];
 ?>
 
 <html>
-<head><title>Lite</title></head>
+<head>
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>  -->
+  <title>Lite</title></head>
 
 <body style=" background: linear-gradient(to right, lightskyblue 10%, antiquewhite, lightskyblue 90%); text-align: center;">
-<div style="background-color: mintcream; width:70%; height:100%; margin:auto; border-radius: 25px; " >
-    
+<div style="background-color: mintcream; width:70%; margin:auto; border-radius: 25px; " >
+   
+   
 <form action="" method="post">
 <input type="text" name="server" value="<?php echo $server?>"><br>
     <input type="text" name="username" value="<?php echo $username?>"><br>
@@ -39,6 +45,8 @@ save("password");
 save("database");
 save("tables");
 save("tables2");
+save("condition1");
+save("condition2");
 save("attributes");
 save("attributes2");
 save("run_query");
@@ -65,25 +73,35 @@ $tb3 = new GUItable();
 $tb3 = $t->read();
 echo $tb3->getHTMLTable();
 
+echo $tb3->getListBox("FKtest", 1);
+save("FKtest"); echo $_SESSION["FKtest"];
+
 $t2 = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], $_SESSION["tables2"]);
 $tbt3 = new GUItable();
 $tbt3 = $t2->read();
 echo $tbt3->getHTMLTable();
 
 $tb_attrib = new GUItable();
-$tb_attrib = $t->getAttributes(); 
+$tb_attrib = $t->getAttributes();
 echo $tb_attrib ->getListBoxMultiple("attributes");
 
 $tb2_attrib = new GUItable();
 $tb2_attrib = $t2->getAttributes();
 echo $tb2_attrib ->getListBoxMultiple("attributes2");
 
+echo "Conditions:";
+$tb_attrib = new GUItable();
+$tb_attrib = $t->getAttributes();
+echo $tb_attrib ->getListBoxMultiple("condition1");
+$tb2_attrib = new GUItable();
+$tb2_attrib = $t2->getAttributes();
+echo $tb2_attrib ->getListBoxMultiple("condition2");
 
+$a = new Condition($_SESSION["tables"] . "." . $_SESSION["condition1"][0],"=",$_SESSION["tables2"] . "." . $_SESSION["condition2"][0]);
 
 $tb_complex = new GUItable();
-$tb_complex = $d->complexRead(array_merge($_SESSION["attributes"], $_SESSION["attributes2"]), [$_SESSION["tables"], $_SESSION["tables2"]]);
+$tb_complex = $d->complexRead(array_merge($_SESSION["attributes"], $_SESSION["attributes2"]), [$_SESSION["tables"], $_SESSION["tables2"]], [$a]);
 echo $tb_complex->getHTMLTable();
-
 
 
 $query_input = new GUItable();
@@ -94,6 +112,29 @@ $tb4 = new GUItable();
 $tb4 = $q->getQuery($_SESSION["run_query"], true);
 echo $tb4->getHTMLTable();
 
+echo "Insert a Race Result: <br>";
+echo "Race:"; //fk for schedule 1
+$raceresults = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Schedule");
+$tbSchedule = $raceresults->read();
+echo $tbSchedule->getListBox("sch", 0);
+save("sch");
+
+echo "Driver:"; //fk for driver 1
+$drivers = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Drivers");
+$tbDrivers = $drivers->read();
+echo $tbDrivers->getListBox("Drivers", 0);
+save("Drivers");
+
+echo "Place:"; //text box
+echo "<form  action='' method='post'><input type='text' name='place'><input type='submit' value='Insert Record'></form>";
+save("place");
+
+if ($_SESSION["place"] != 0){
+$q->sendQuery("INSERT INTO `dbShawn`.`RaceResults` (`ID`, `DriverID`, `Place`) VALUES ('" . $_SESSION["sch"] ."', '" . $_SESSION["Drivers"] . "', '" . $_SESSION["place"]. "');");
+
+unset($_SESSION["place"] , $_SESSION["sch"] , $_SESSION["Drivers"] );
+
+}
 ?>
 
 
@@ -104,6 +145,31 @@ echo $tb4->getHTMLTable();
 
 
 <?php
+
+class Condition {
+public $m_left;
+public $m_right;
+public $m_operator;
+private $accepted_operators = array ("=","<",">", ">=","<=");
+public function __construct($left, $operator, $right) {
+   
+    $this->m_left = $left;
+    $this->m_right = $right;
+   
+    if (in_array($operator, $this->accepted_operators))
+    $this->m_operator = $operator;
+    else {
+    $this->m_operator = NULL;
+   
+    $e = new Error("Operator [" . $operator . "] not allowed - will be set to null.", true);
+   
+    }
+}//end constructor
+
+
+} //end condition class
+
+
 class DatabaseConnection {
     //sanitize here?
 private $m_server;
@@ -190,25 +256,28 @@ $this->index = $this->index + 1;
 
 public function getHTMLTable(){
 
-$s = "<table border='1'> <tr>";
+//$s = "<br><button type='button' class='btn btn-info' data-toggle='collapse' data-target='#" . $name ."'>Show/Hide</button><div id='" . $name ."' class='collapse'><table border='1'> <tr>";
 
-for ($i=0; $i<=sizeof($this->m_tb); $i++) { 
+	$s = "<table border='1'><tr>";
+	
+	
+for ($i=0; $i<=sizeof($this->m_tb); $i++) {
 
 
-if ($this->m_tb[$i] != $this->NEWLINE) $s .= "<td>" . $this->m_tb[$i] . "</td>"; 
+if ($this->m_tb[$i] != $this->NEWLINE) $s .= "<td>" . $this->m_tb[$i] . "</td>";
 else $s .= "</tr><tr>";
 }
 
-$s .= "</tr></table>";
+$s .= "</tr></table>"; //</div>
 return $s;
 
 }//end get table
 
-public function getListBox($name){
+public function getListBox($name, $foreignKey = 0){
 
 $s = "<form action='' method='post'><select name='" . $name ."'>";
 
-$s .= "<option value='" . $this->m_tb[0] . "'>" . $this->m_tb[0];
+$s .= "<option value='" . $this->m_tb[0 + $foreignKey] . "'>" . $this->m_tb[0];
 
 for ($i=1; $i<=sizeof($this->m_tb); $i++) {
 
@@ -216,8 +285,8 @@ if ($this->m_tb[$i] != $this->NEWLINE) $s .= " | " . $this->m_tb[$i];
 
 else {
 
-$i = $i + 1; 
-$s .= "</option>" . "<option value='" . $this->m_tb[$i] . "'>" . $this->m_tb[$i];
+$i = $i + 1;
+$s .= "</option>" . "<option value='" . $this->m_tb[$i + $foreignKey] . "'>" . $this->m_tb[$i];
 }
              
 
@@ -240,7 +309,7 @@ if ($this->m_tb[$i] != $this->NEWLINE) $s .= " | " . $this->m_tb[$i];
 
 else {
 
-$i = $i + 1; 
+$i = $i + 1;
 $s .= "</option>" . "<option value='" . $this->m_tb[$i] . "'>" . $this->m_tb[$i];
 }
              
@@ -306,24 +375,33 @@ return $this->m_conn->getQuery("show tables from " . $this->m_database . ";");
 
 }
 
-public function complexRead($attributes, $tables){
+public function complexRead($attributes, $tables, $conditions){
 
 $s = "SELECT ";
 
-	for ($i = 0; $i <= sizeOf($attributes)-2; $i = $i + 1){
-		$s .= $attributes[$i] . ",";
-		}
-		$s .= $attributes[sizeOf($attributes) - 1];
+for ($i = 0; $i <= sizeOf($attributes)-2; $i = $i + 1){
+$s .= $attributes[$i] . ",";
+}
+$s .= $attributes[sizeOf($attributes) - 1];
 
 $s .= " FROM ";
 
-	for ($i = 0; $i <= sizeOf($tables)-2; $i = $i + 1){
-		$s .= $this->m_database . "." . $tables[$i] . ",";
-		}
-		$s .= $this->m_database . "." .  $tables[sizeOf($tables) - 1];
+for ($i = 0; $i <= sizeOf($tables)-2; $i = $i + 1){
+$s .= $this->m_database . "." . $tables[$i] . ",";
+}
+$s .= $this->m_database . "." .  $tables[sizeOf($tables) - 1];
+
+$s .= " WHERE ";
+
+$s .= $conditions[0]->m_left . $conditions[0]->m_operator . $conditions[0]->m_right;
+
+for ($i = 1; $i <= sizeOf($conditions)-1; $i = $i + 1){
+    $s .= " AND " . $conditions[$i]->m_left . $conditions[$i]->m_operator . $conditions[$i]->m_right;
+}
 
 $s .= ";";
 
+echo $s;
 return $this->m_conn->getQuery($s);
 
 
@@ -371,7 +449,7 @@ return $this->m_conn->getQuery("SHOW COLUMNS FROM " . $this->m_database . "." . 
 
 
 
-echo "END OF FILE";
+//echo "END OF FILE";
 
 
 
@@ -396,7 +474,7 @@ echo "END OF FILE";
 // // Check connection
 // if ($conn->connect_error) {
 //     die("Connection failed: " . $conn->connect_error);
-// } 
+// }
 // echo "Connection! \n";
 
 
@@ -407,7 +485,7 @@ echo "END OF FILE";
 
 // for ($i = 0; $i < $row_count; $i++){
 //      foreach ($row as $value) {echo $value . "| ";}
-// echo "NEWLINE";	
+// echo "NEWLINE";
 // $row = $result->fetch_array(MYSQLI_NUM);
 // }
 

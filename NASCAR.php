@@ -39,44 +39,83 @@ save("server");
 save("username");
 save("password");
 save("database");
-echo "<form action='' method='post'><input type='submit' value='SEND!'>";
 
+echo "<form action='' method='post'>";
 $s = new SchemaCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
 $tb = new GUItable();
 $tb = $s->read();
 echo $tb->getListBox("database");
+echo "<input type='submit' value='Select DB'></form>";
+$q = new DatabaseConnection($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
 
 
-
-echo "Insert a Race Result: <br>";
+////add a race result
+echo "<form action='' method='post'>";
+echo "<br><br>Insert a Race Result: <br><br>";
 echo "Race:"; //fk for schedule 1
 $raceresults = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Schedule");
 $tbSchedule = $raceresults->read();
 echo $tbSchedule->getListBox("sch", 0);
 save("sch");
 
-echo "Driver:"; //fk for driver 1
+echo "<br>Driver:"; //fk for driver 1
 $drivers = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Drivers");
 $tbDrivers = $drivers->read();
 echo $tbDrivers->getListBox("Drivers", 0);
 save("Drivers");
 
 
-echo "Place:"; //text box
+echo "<br>Place:"; //text box
 echo "<input type='text' name='place'>";
 save("place");
 
-$q = new DatabaseConnection($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
+$raceresults = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "RaceResults");
+$tbRaceResults = $raceresults->read();
+echo $tbRaceResults->getHTMLTable();
 
-//if ($_SESSION["place"] != 0){
+if (isset($_SESSION["place"])){
+$raceresults->create(["ScheduleID","DriverID","Place"], [$_SESSION["sch"], $_SESSION["Drivers"], $_SESSION["place"]]);
+unset($_SESSION["place"]);
+}
 
-$q->sendQuery("INSERT INTO `dbShawn`.`RaceResults` (`ScheduleID`, `DriverID`, `Place`) VALUES ('" . $_SESSION["sch"] ."', '" . $_SESSION["Drivers"] . "', '" . $_SESSION["place"]. "');", true);
 
-unset($_SESSION["place"] , $_SESSION["sch"] , $_SESSION["Drivers"] );
 
-//}
+//$q->sendQuery("INSERT INTO `dbShawn`.`RaceResults` (`ScheduleID`, `DriverID`, `Place`) VALUES ('" . $_SESSION["sch"] ."', '" . $_SESSION["Drivers"] . "', '" . $_SESSION["place"]. "');", true);
 
-echo "</form>";
+echo "<input type='submit' value='Insert Race Result'></form>";
+
+
+
+
+////add a driver
+echo "<form action='' method='post'>";
+
+echo "<br>Last Name:";
+echo "<input type='text' name='lname'>";save("lname");
+
+echo "<br>Firs Name:";
+echo "<input type='text' name='fname'>";save("fname");
+
+echo "<br>Suffix:";
+echo "<input type='text' name='suffix'>";save("suffix");
+
+echo "<br>DoB:";
+echo "<input type='date' name='bday'>"; save("bday");
+
+echo "<br>City:";
+echo "<input type='text' name='city'>";save("city");
+
+echo "<br>State:";
+echo "<input type='text' name='state'>";save("state");
+
+
+if (isset($_SESSION["lname"])){
+
+$drivers->create(["LastName", "FirstName", "Suffix", "BirthDate", "City", "State"],[$_SESSION["lname"],$_SESSION["fname"],$_SESSION["suffix"],$_SESSION["bday"],$_SESSION["city"],$_SESSION["state"]]);
+
+unset($_SESSION["lname"]);
+}
+echo "<br><input type='submit' value='Add a Driver'></form>";
 ?>
 
 

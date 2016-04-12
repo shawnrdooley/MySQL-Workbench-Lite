@@ -90,7 +90,7 @@ private $m_error_str;
 function __construct($error_string, $echo = false) {
 $m_error_str = $error_string;
 
-if ($echo) echo $m_error_str;
+if ($echo) echo "<div style='background-color: #737CA1; border-radius: 25px; ' >" . $m_error_str . "</div>";
 
 }
 }//end error class
@@ -130,7 +130,7 @@ return $s;
 public function getListBox($name, $foreignKey = 0){
 
 ////////$s = "<form action='' method='post'><select name='" . $name ."'>";
-$s = "<br><br><select name='" . $name ."'>";
+$s = "<select name='" . $name ."'>";
 
 $s .= "<option value='" . $this->m_tb[0 + $foreignKey] . "'>" . $this->m_tb[0];
 
@@ -155,7 +155,7 @@ return $s;
 
 public function getListBoxMultiple($name){
 
-$s = "<br><br><select name='" . $name ."[]' multiple>";
+$s = "<select name='" . $name ."[]' multiple>";
 
 $s .= "<option value='" . $this->m_tb[0] . "'>" . $this->m_tb[0];
 
@@ -179,7 +179,7 @@ return $s;
 
 public function getTextArea($rows, $cols, $name){
 
-return "<br><br><textarea rows='" . $rows ."' cols='" . $cols ."' name='" . $name . "'></textarea>"
+return "<textarea rows='" . $rows ."' cols='" . $cols ."' name='" . $name . "'></textarea>"
 . "</form>";
 
 }//end getTextArea
@@ -285,6 +285,30 @@ $this->m_conn = new DatabaseConnection($server, $username, $password);
 
 
 }//end opening a connection
+
+public function create($attributes, $values){
+	
+$s = "INSERT INTO `" . $this->m_database ."`.`" . $this->m_table ."` (";
+		
+
+		for ($i = 0; $i <= sizeOf($attributes)-2; $i = $i + 1){
+			$s .= "`" . $attributes[$i] . "`,";
+		}
+		$s .= "`" .$attributes[sizeOf($attributes) - 1] . "`)";
+	
+		$s .= " VALUES (";
+	
+		for ($i = 0; $i <= sizeOf($values)-2; $i = $i + 1){
+			$s .= "'" . $values[$i] . "',";
+		}
+		$s .= "'" .  $values[sizeOf($values) - 1] . "')";
+	
+		$s .= ";";
+	
+$this->m_conn->sendQuery($s, true);
+	
+	
+}
 
 public function read(){
 

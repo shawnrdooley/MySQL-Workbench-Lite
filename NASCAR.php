@@ -40,13 +40,19 @@ save("username");
 save("password");
 save("database");
 
+
+
+$adatabase = new DatabaseCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"]);
+$resultsxdrivers = $adatabase->complexRead(["LastName","FirstName","Suffix","Place","Name"], ["Drivers", "RaceResults", "Schedule",  "Races"], [new Condition("Drivers.ID","=","DriverID"),new Condition("ScheduleID","=","Schedule.ID"),new Condition("RaceID","=","Races.ID")]);
+echo $resultsxdrivers->getHTMLTable();
+
+
 echo "<form action='' method='post'>";
 $s = new SchemaCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
 $tb = new GUItable();
 $tb = $s->read();
 echo $tb->getListBox("database");
 echo "<input type='submit' value='Select DB'></form>";
-$q = new DatabaseConnection($_SESSION["server"], $_SESSION["username"], $_SESSION["password"]);
 
 
 ////add a race result

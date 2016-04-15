@@ -14,7 +14,8 @@ session_start();
 function save($v){
 //sanitize here?
 
-if ( isset($_POST[$v])) $_SESSION[$v] = $_POST[$v];
+if ( isset($_POST[$v]) ) $_SESSION[$v] = $_POST[$v];
+if ( isset($_POST[$v]) && $_POST[$v]  == "") $_SESSION[$v] = null;
 
 }
 ?>
@@ -52,7 +53,7 @@ echo "<input type='submit' value='Select DB'></form>";
 
 //track type
 echo "<form action='' method='post'>";
-echo "Add a Track Type:<br>";
+echo "<br><br>Add a Track Type:<br>";
 $trackType = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "TrackTypes");
 
 echo "<br>Name:";
@@ -71,7 +72,7 @@ echo "<br><input type='submit' value='Add'></form>";
 
 
 //add track
-echo "<form action='' method='post'>";
+echo "<br><br><form action='' method='post'>";
 echo "Add a Track:<br>";
 $track = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Tracks");
 
@@ -80,7 +81,7 @@ echo "<input type='text' name='trackName'>";save("trackName");
 echo "<br>City:";
 echo "<input type='text' name='trackCity'>";save("trackCity");
 echo "<br>State:";
-echo "<input type='text' name='trackState'>";save("trackState");
+echo "<input type='text' name='trackState'><br>";save("trackState");
 echo $trackType->read()->getListBox("track_type"); save("track_type");
 echo "<br>Length:";
 echo "<input type='text' name='trackLength'>";save("trackLength");
@@ -101,7 +102,7 @@ echo "<br><input type='submit' value='Add'></form>";
 
 //add race
 echo "<form action='' method='post'>";
-echo "Add a Race:<br>";
+echo "<br><br>Add a Race:<br>";
 $race = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Races");
 
 echo "<br>Name:";
@@ -125,7 +126,7 @@ echo "<br><input type='submit' value='Add'></form>";
 
 //schedule
 echo "<form action='' method='post'>";
-echo "Add a Schedule:<br>";
+echo "<br><br>Add a Schedule:<br>";
 $schedule = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Schedule");
 
 echo "<br>Year:";
@@ -150,12 +151,13 @@ echo "<br><input type='submit' value='Add'></form>";
 
 
 //add a driver
+$drivers = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Drivers");
 echo "<form action='' method='post'>";
 
-echo "<br>Last Name:";
+echo "<br><br><br>Last Name:";
 echo "<input type='text' name='lname'>";save("lname");
 
-echo "<br>Firs Name:";
+echo "<br>First Name:";
 echo "<input type='text' name='fname'>";save("fname");
 
 echo "<br>Suffix:";
@@ -186,13 +188,12 @@ echo "<br><input type='submit' value='Add a Driver'></form>";
 echo "<form action='' method='post'>";
 echo "<br><br>Insert a Race Result: <br><br>";
 echo "Race:"; //fk for schedule 1
-$raceresults = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Schedule");
-$tbSchedule = $raceresults->read();
-echo $tbSchedule->getListBox("sch", 0);
+//was: $raceresults = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Schedule");
+$adatabase = new DatabaseCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"]);
+echo $adatabase->complexRead(["Schedule.ID", "Year", "Name"],["Schedule","Races"],[new Condition("RaceID","=","Races.ID")])->getListBox("sch", 0);
 save("sch");
 
 echo "<br>Driver:"; //fk for driver 1
-$drivers = new TableCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"], "Drivers");
 $tbDrivers = $drivers->read();
 echo $tbDrivers->getListBox("Drivers", 0);
 save("Drivers");
@@ -219,7 +220,7 @@ echo "<input type='submit' value='Insert Race Result'></form>";
 
 
 
-$adatabase = new DatabaseCRUD($_SESSION["server"], $_SESSION["username"], $_SESSION["password"], $_SESSION["database"]);
+
 $resultsxdrivers = $adatabase->complexRead(["LastName","FirstName","Suffix","Place","Name"], ["Drivers", "RaceResults", "Schedule",  "Races"], [new Condition("Drivers.ID","=","DriverID"),new Condition("ScheduleID","=","Schedule.ID"),new Condition("RaceID","=","Races.ID")]);
 echo $resultsxdrivers->getHTMLTable();
 

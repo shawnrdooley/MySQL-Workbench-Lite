@@ -299,9 +299,9 @@ $s = "INSERT INTO `" . $this->m_database ."`.`" . $this->m_table ."` (";
 		$s .= " VALUES (";
 	
 		for ($i = 0; $i <= sizeOf($values)-2; $i = $i + 1){
-			$s .= "'" . $values[$i] . "',";
+			if ($values[$i] === null) $s .= "null,"; else $s .= "'" . $values[$i] . "',";
 		}
-		$s .= "'" .  $values[sizeOf($values) - 1] . "')";
+		if ($values[sizeOf($values) - 1] === null) $s .= "null)"; else $s .=  "'" .  $values[sizeOf($values) - 1] . "')";
 	
 		$s .= ";";
 	
